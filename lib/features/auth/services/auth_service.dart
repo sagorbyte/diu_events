@@ -182,23 +182,23 @@ class AuthService {
     try {
       // First clear any cached user data
       FirebaseAuth.instance.authStateChanges().drain();
-      
+
       // Force sign out from Firebase Auth
       await _firebaseAuth.signOut();
-      
+
       // Force sign out from Google Sign In
       try {
         await _googleSignIn.disconnect();
       } catch (e) {
         print('Google disconnect error (non-critical): $e');
       }
-      
+
       try {
         await _googleSignIn.signOut();
       } catch (e) {
         print('Google signOut error (non-critical): $e');
       }
-      
+
       // Clear any persistent auth state
       await Future.delayed(const Duration(milliseconds: 300));
     } catch (e) {
@@ -215,7 +215,7 @@ class AuthService {
           .collection('users')
           .doc(user.uid)
           .get();
-      
+
       if (existingUserDoc.exists) {
         // User exists, only update login timestamp and basic auth fields
         final updateData = {
@@ -223,18 +223,17 @@ class AuthService {
           'email': user.email,
           'profilePicture': user.photoURL ?? '',
         };
-        
+
         // Only update name if it's provided and different, or if current name is empty
         final existingData = existingUserDoc.data() as Map<String, dynamic>;
-        if (name != null || existingData['name'] == null || existingData['name'].toString().isEmpty) {
+        if (name != null ||
+            existingData['name'] == null ||
+            existingData['name'].toString().isEmpty) {
           updateData['name'] = name ?? user.displayName ?? '';
         }
-        
-        await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .update(updateData);
-            
+
+        await _firestore.collection('users').doc(user.uid).update(updateData);
+
         print('Updated existing user login timestamp and basic fields');
       } else {
         // New user, create full document
@@ -248,11 +247,8 @@ class AuthService {
           'lastLogin': FieldValue.serverTimestamp(),
         };
 
-        await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .set(userData);
-            
+        await _firestore.collection('users').doc(user.uid).set(userData);
+
         print('Created new user document');
       }
     } catch (e) {
@@ -272,7 +268,7 @@ class AuthService {
           .collection('users')
           .doc(firebaseUser.uid)
           .get();
-      
+
       if (existingUserDoc.exists) {
         // User exists, only update login timestamp and basic auth fields
         final updateData = {
@@ -281,18 +277,20 @@ class AuthService {
           'email': googleUser.email,
           'profilePicture': googleUser.photoUrl ?? firebaseUser.photoURL ?? '',
         };
-        
+
         // Only update name if it's empty in existing document
         final existingData = existingUserDoc.data() as Map<String, dynamic>;
-        if (existingData['name'] == null || existingData['name'].toString().isEmpty) {
-          updateData['name'] = googleUser.displayName ?? firebaseUser.displayName ?? '';
+        if (existingData['name'] == null ||
+            existingData['name'].toString().isEmpty) {
+          updateData['name'] =
+              googleUser.displayName ?? firebaseUser.displayName ?? '';
         }
-        
+
         await _firestore
             .collection('users')
             .doc(firebaseUser.uid)
             .update(updateData);
-            
+
         print('Updated existing user login timestamp and basic fields');
       } else {
         // New user, create full document
@@ -310,7 +308,7 @@ class AuthService {
             .collection('users')
             .doc(firebaseUser.uid)
             .set(userData);
-            
+
         print('Created new user document');
       }
     } catch (e) {
@@ -327,7 +325,7 @@ class AuthService {
           .collection('users')
           .doc(firebaseUser.uid)
           .get();
-      
+
       if (existingUserDoc.exists) {
         // User exists, only update login timestamp and basic auth fields
         final updateData = {
@@ -336,19 +334,22 @@ class AuthService {
           'email': firebaseUser.email ?? '',
           'profilePicture': firebaseUser.photoURL ?? '',
         };
-        
+
         // Only update name if it's empty in existing document
         final existingData = existingUserDoc.data() as Map<String, dynamic>;
-        if (existingData['name'] == null || existingData['name'].toString().isEmpty) {
+        if (existingData['name'] == null ||
+            existingData['name'].toString().isEmpty) {
           updateData['name'] = firebaseUser.displayName ?? 'Unknown User';
         }
-        
+
         await _firestore
             .collection('users')
             .doc(firebaseUser.uid)
             .update(updateData);
-            
-        print('Updated existing user login timestamp and basic fields (fallback)');
+
+        print(
+          'Updated existing user login timestamp and basic fields (fallback)',
+        );
       } else {
         // New user, create full document
         final userData = {
@@ -365,7 +366,7 @@ class AuthService {
             .collection('users')
             .doc(firebaseUser.uid)
             .set(userData);
-            
+
         print('Created new user document (fallback)');
       }
 
@@ -460,7 +461,9 @@ class AuthService {
       }
 
       if (lastSeenUpdateTime != null) {
-        updateData['lastSeenUpdateTime'] = Timestamp.fromDate(lastSeenUpdateTime);
+        updateData['lastSeenUpdateTime'] = Timestamp.fromDate(
+          lastSeenUpdateTime,
+        );
       }
 
       if (updateData.isNotEmpty) {
