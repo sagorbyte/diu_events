@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 
 class ProfileImageService {
   // 🔑 Same API key as ImgBB service
-  static const String _apiKey = '7a57c0c9a0a7507947f74fe91ca410d1';
+  static const String _apiKey = 'b19c8b5e7584e0c066490f988d25f536';
 
   final ImagePicker _picker = ImagePicker();
 
