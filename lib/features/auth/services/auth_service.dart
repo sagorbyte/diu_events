@@ -48,11 +48,11 @@ class AuthService {
         // Use Firebase's built-in Google auth provider for web
         GoogleAuthProvider googleProvider = GoogleAuthProvider();
 
-        // Add custom parameters for Google sign-in on web - DOMAIN RESTRICTION TEMPORARILY DISABLED
-        // googleProvider.setCustomParameters({
-        //   'login_hint': '@diu.edu.bd',
-        //   'hd': 'diu.edu.bd', // Limits to specific domain
-        // });
+        // Add custom parameters for Google sign-in on web - DOMAIN RESTRICTION ENABLED
+        googleProvider.setCustomParameters({
+          'login_hint': '@diu.edu.bd',
+          'hd': 'diu.edu.bd', // Forces Google account picker to show only diu.edu.bd accounts
+        });
 
         // Trigger popup sign-in flow directly with Firebase
         userCredential = await _firebaseAuth.signInWithPopup(googleProvider);
