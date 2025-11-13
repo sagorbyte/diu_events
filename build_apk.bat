@@ -64,6 +64,7 @@ echo.
 flutter build apk ^
   --release ^
   --split-per-abi ^
+  --no-tree-shake-icons ^
   --build-number=%BUILD_NUMBER% ^
   --build-name=%BUILD_NAME%
 
