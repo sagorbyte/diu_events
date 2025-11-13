@@ -57,17 +57,17 @@ class AuthService {
         // Trigger popup sign-in flow directly with Firebase
         userCredential = await _firebaseAuth.signInWithPopup(googleProvider);
 
-        // Check domain restriction - TEMPORARILY DISABLED FOR TESTING
-        // final String? email = userCredential.user?.email;
-        // if (email != null) {
-        //   final String domain = email.split('@')[1];
-        //   if (!allowedDomains.contains(domain)) {
-        //     await signOut();
-        //     throw Exception(
-        //       'Only @diu.edu.bd and @daffodilvarsity.edu.bd email addresses are allowed',
-        //     );
-        //   }
-        // }
+        // Check domain restriction
+        final String? email = userCredential.user?.email;
+        if (email != null) {
+          final String domain = email.split('@')[1];
+          if (!allowedDomains.contains(domain)) {
+            await signOut();
+            throw Exception(
+              'Only @diu.edu.bd and @daffodilvarsity.edu.bd email addresses are allowed',
+            );
+          }
+        }
 
         // Store user data directly from Firebase User
         if (userCredential.user != null) {
@@ -81,16 +81,16 @@ class AuthService {
           throw Exception('Google Sign-In was cancelled');
         }
 
-        // Check if the email domain is allowed - TEMPORARILY DISABLED FOR TESTING
-        // final String email = googleUser.email;
-        // final String domain = email.split('@')[1];
+        // Check if the email domain is allowed
+        final String email = googleUser.email;
+        final String domain = email.split('@')[1];
 
-        // if (!allowedDomains.contains(domain)) {
-        //   await _googleSignIn.signOut();
-        //   throw Exception(
-        //     'Only @diu.edu.bd and @daffodilvarsity.edu.bd email addresses are allowed',
-        //   );
-        // }
+        if (!allowedDomains.contains(domain)) {
+          await _googleSignIn.signOut();
+          throw Exception(
+            'Only @diu.edu.bd and @daffodilvarsity.edu.bd email addresses are allowed',
+          );
+        }
 
         // Obtain the auth details from the request
         final GoogleSignInAuthentication googleAuth =

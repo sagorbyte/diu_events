@@ -1,5 +1,15 @@
 {
   "projects": {
-    "default": "diu-events-app"
-  }
+    "default": "diu-events-app-d1718"
+  },
+  "targets": {
+    "diu-events-app-d1718": {
+      "hosting": {
+        "diueventsapp": [
+          "diueventsapp"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

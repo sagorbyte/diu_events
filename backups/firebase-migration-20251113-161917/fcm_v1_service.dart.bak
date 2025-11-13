@@ -11,7 +11,7 @@ class FCMV1Service {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Your Firebase project ID
-  static const String _projectId = 'diu-events-app-d1718';
+  static const String _projectId = 'diu-events-app';
 
   // FCM V1 API endpoint
   static String get _fcmEndpoint =>
