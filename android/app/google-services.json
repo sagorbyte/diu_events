@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "210442734122",
+    "project_id": "diu-events-app",
+    "storage_bucket": "diu-events-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:210442734122:android:6c32c51591e986a7f39153",
+        "android_client_info": {
+          "package_name": "com.example.diu_events"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "210442734122-pgg2hbk52oci0idg8vrvsobdml5cg243.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.diu_events",
+            "certificate_hash": "0009f9dabe5dc7342c6acd309cbf5b7944c300e0"
+          }
+        },
+        {
+          "client_id": "210442734122-g8rqhhmn1t048oe0nqfkb5vls7gv86rk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbb9AhJ969PUC9MTER9bibf2VqSRfgjLA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "210442734122-g8rqhhmn1t048oe0nqfkb5vls7gv86rk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "210442734122-mt55giqg46lavkshntqpqqdvi990oin5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.diuEvents"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

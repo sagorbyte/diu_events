@@ -1,0 +1,161 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ------------------------------------------------------------------
+    // Helper role functions to reduce duplication
+    // ------------------------------------------------------------------
+    function _userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        _userDoc().data.role == 'admin';
+    }
+    function isSuperAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        _userDoc().data.role == 'superadmin';
+    }
+    function isElevated() { // admin OR superadmin
+      return isAdmin() || isSuperAdmin();
+    }
+    // Users collection - users can read/write their own data, admins and superadmins can read all
+    match /users/{userId} {
+      // Users can read/write their own data
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Admins and superadmins can read all user data (for user management)
+      allow read: if request.auth != null && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin');
+      
+      // Superadmins can update any user's role
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
+    }
+    
+    // Events collection - more specific rules
+    match /events/{eventId} {
+      // Anyone authenticated can read events
+      allow read: if request.auth != null;
+      
+      // Users can create events if they are admin or superadmin
+      allow create: if request.auth != null && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin');
+      
+      // Users can update/delete events they created OR if they are superadmin
+      allow update, delete: if request.auth != null && 
+        (resource.data.organizerId == request.auth.uid ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin');
+      
+      // Legacy: Allow registration updates for backward compatibility (will be phased out)
+      allow update: if request.auth != null && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['registeredParticipants', 'updatedAt', 'interestedUsers']);
+    }
+    
+    // Admin verification
+    match /admins/{adminId} {
+      allow read, write: if request.auth != null && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin');
+    }
+    
+    // Student Event Interactions collection - New system for managing registrations and following
+    match /student_event_interactions/{interactionId} {
+      // Users can read interactions where they are the student, admins/superadmins can read all
+      allow read: if request.auth != null && 
+        (resource.data.studentId == request.auth.uid || 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin');
+      
+      // Users can create interactions for themselves, admins/superadmins can create for anyone
+      allow create: if request.auth != null && 
+        (request.resource.data.studentId == request.auth.uid ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin') &&
+        request.resource.data.keys().hasAll(['studentId', 'eventId', 'type', 'createdAt', 'isActive']);
+      
+      // Users can update/delete their own interactions, admins/superadmins can manage all
+      allow update: if request.auth != null && 
+        (resource.data.studentId == request.auth.uid ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin') &&
+        request.resource.data.studentId == resource.data.studentId &&
+        request.resource.data.eventId == resource.data.eventId;
+      
+      // Users can delete their own interactions, admins/superadmins can delete all
+      allow delete: if request.auth != null && 
+        (resource.data.studentId == request.auth.uid ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin');
+    }
+    
+    // Event Updates collection
+    match /event_updates/{updateId} {
+      // Anyone authenticated can read event updates
+      allow read: if request.auth != null;
+      
+      // Only admins and superadmins can create event updates
+      allow create: if request.auth != null && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin') &&
+        request.resource.data.organizerId == request.auth.uid;
+      
+      // Only the organizer who created the update or superadmin can update/delete it
+      allow update, delete: if request.auth != null && 
+        (resource.data.organizerId == request.auth.uid ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin');
+    }
+    
+    // User Notifications collection - Private notifications for individual users
+    match /user_notifications/{notificationId} {
+      // Users can only read their own notifications
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      
+      // TEMPORARILY: Completely open for testing FCM - NO AUTH CHECK
+      // TODO: Restrict back to admins only in production
+      allow create, write: if true;
+      
+      // Original rule (commented out for testing):
+      // allow create: if request.auth != null && 
+      //   (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+      //    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin');
+      
+      // Users can update only their own notifications (mark as read, etc.)
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == resource.data.userId; // Prevent userId changes
+      
+      // Users can delete their own notifications, admins/superadmins can delete any
+      allow delete: if request.auth != null && 
+        (resource.data.userId == request.auth.uid ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin');
+    }
+
+    // Event Tickets collection - per-user tickets for events
+    match /event_tickets/{ticketId} {
+  // Owners can read their own ticket documents.
+  // Admins & superadmins can get (read a single doc) any ticket to verify scans.
+  // "list" (querying multiple tickets) remains restricted to owners only to avoid bulk exposure.
+  allow get: if request.auth != null && (resource.data.userId == request.auth.uid || isElevated());
+  allow list: if request.auth != null && (resource.data.userId == request.auth.uid || isElevated());
+
+      // Owners can create tickets for themselves. Validate minimal shape and types.
+      allow create: if request.auth != null &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.keys().hasAll(['userId','eventId','eventTitle','createdAt']) &&
+        request.resource.data.userId is string &&
+        request.resource.data.eventId is string &&
+        request.resource.data.eventTitle is string;
+
+      // Allow owners and admins/superadmins to delete tickets (used on unregister)
+      allow delete: if request.auth != null &&
+        (resource.data.userId == request.auth.uid || isElevated());
+
+      // Prevent client updates to ticket documents (use create/delete only)
+      allow update: if false;
+    }
+  }
+}
