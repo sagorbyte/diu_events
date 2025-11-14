@@ -698,25 +698,6 @@ class _StudentEventDetailScreenState extends State<StudentEventDetailScreen> {
                 isOutlined: true,
               ),
             ],
-            // If user followed before registering, allow them to view updates
-            if (_isFollowing) const SizedBox(height: 8),
-            if (_isFollowing)
-              _buildActionButton(
-                label: 'Updates',
-                icon: Icons.info_outline,
-                color: const Color(0xFF3F3D9C),
-                textColor: Colors.black,
-                iconColor: const Color(0xFF3F3D9C),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => EventPublicUpdatesScreen(
-                      eventId: widget.event.id,
-                      eventTitle: widget.event.title,
-                    ),
-                  ),
-                ),
-                isOutlined: true,
-              ),
 
             const SizedBox(height: 24),
           ],
