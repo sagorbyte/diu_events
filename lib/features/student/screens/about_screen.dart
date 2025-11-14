@@ -13,7 +13,7 @@ class AboutScreen extends StatefulWidget {
 
 class _AboutScreenState extends State<AboutScreen> {
   int _developerSectionTapCount = 0;
-  static const int _tapsRequired = 10;
+  static const int _tapsRequired = 30;
 
   @override
   Widget build(BuildContext context) {
