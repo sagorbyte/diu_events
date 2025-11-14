@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../utils/error_handler.dart';
+import '../../../core/exceptions/app_exceptions.dart';
 import '../models/event.dart';
 import '../models/event_update.dart';
 import '../services/event_service.dart';
@@ -42,12 +44,16 @@ class EventProvider with ChangeNotifier {
   Future<void> fetchAllEvents() async {
     try {
       _setLoading(true);
+      clearError();
       _events = await _eventService.getAllEvents();
       // Ensure provider's master list is sorted by start date (latest first)
       _events.sort((a, b) => b.startDate.compareTo(a.startDate));
       _applyFilter();
     } catch (e) {
-      _setError(e.toString());
+      final appException = ErrorHandler.handleException(e, StackTrace.current,
+          defaultMessage: 'Failed to load events');
+      _setError(appException.getUserMessage());
+      ErrorHandler.logException(appException);
     } finally {
       _setLoading(false);
     }
@@ -57,15 +63,14 @@ class EventProvider with ChangeNotifier {
   Future<void> fetchOrganizerEvents(String organizerId) async {
     try {
       _setLoading(true);
-      print(
-        'EventProvider: Fetching events for organizer: $organizerId',
-      ); // Debug log
+      clearError();
       _events = await _eventService.getEventsByOrganizer(organizerId);
-      print('EventProvider: Fetched ${_events.length} events'); // Debug log
       _applyFilter();
     } catch (e) {
-      print('EventProvider: Error fetching organizer events: $e'); // Debug log
-      _setError(e.toString());
+      final appException = ErrorHandler.handleException(e, StackTrace.current,
+          defaultMessage: 'Failed to load events for this organizer');
+      _setError(appException.getUserMessage());
+      ErrorHandler.logException(appException);
     } finally {
       _setLoading(false);
     }

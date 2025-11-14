@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import '../../../utils/error_handler.dart';
+import '../../../core/exceptions/app_exceptions.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -78,7 +80,7 @@ class AuthService {
         final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
         if (googleUser == null) {
-          throw Exception('Google Sign-In was cancelled');
+          throw SignInCancelledException();
         }
 
         // Check if the email domain is allowed
@@ -87,9 +89,7 @@ class AuthService {
 
         if (!allowedDomains.contains(domain)) {
           await _googleSignIn.signOut();
-          throw Exception(
-            'Only @diu.edu.bd and @daffodilvarsity.edu.bd email addresses are allowed',
-          );
+          throw UnauthorizedDomainException();
         }
 
         // Obtain the auth details from the request
@@ -127,7 +127,7 @@ class AuthService {
         }
       }
 
-      throw Exception('Google Sign-In failed: ${e.toString()}');
+      throw ErrorHandler.handleAuthException(e, StackTrace.current);
     }
   }
 
@@ -144,13 +144,15 @@ class AuthService {
       final userData = await _getUserData(userCredential.user!.uid);
       if (userData['role'] != 'admin' && userData['role'] != 'superadmin') {
         await signOut();
-        throw Exception('Access denied. Admin credentials required.');
+        throw AccessDeniedException(
+          message: 'Admin access required',
+          details: 'This account does not have admin privileges',
+        );
       }
 
       return userCredential;
     } catch (e) {
-      print('Email Sign-In Error: $e');
-      throw Exception('Email Sign-In failed: ${e.toString()}');
+      throw ErrorHandler.handleAuthException(e, StackTrace.current);
     }
   }
 
@@ -172,8 +174,7 @@ class AuthService {
 
       return userCredential;
     } catch (e) {
-      print('Email Sign-Up Error: $e');
-      throw Exception('Email Sign-Up failed: ${e.toString()}');
+      throw ErrorHandler.handleAuthException(e, StackTrace.current);
     }
   }
 
@@ -190,20 +191,19 @@ class AuthService {
       try {
         await _googleSignIn.disconnect();
       } catch (e) {
-        print('Google disconnect error (non-critical): $e');
+        // Non-critical error
       }
 
       try {
         await _googleSignIn.signOut();
       } catch (e) {
-        print('Google signOut error (non-critical): $e');
+        // Non-critical error
       }
 
       // Clear any persistent auth state
       await Future.delayed(const Duration(milliseconds: 300));
     } catch (e) {
-      print('Sign Out Error: $e');
-      throw Exception('Sign out failed: ${e.toString()}');
+      throw ErrorHandler.handleAuthException(e, StackTrace.current);
     }
   }
 
@@ -471,8 +471,7 @@ class AuthService {
         await _firestore.collection('users').doc(uid).update(updateData);
       }
     } catch (e) {
-      print('Update User Profile Error: $e');
-      throw Exception('Failed to update user profile: ${e.toString()}');
+      throw ErrorHandler.handleFirestoreException(e, StackTrace.current);
     }
   }
 
@@ -481,8 +480,7 @@ class AuthService {
     try {
       await _firebaseAuth.sendPasswordResetEmail(email: email);
     } catch (e) {
-      print('Reset Password Error: $e');
-      throw Exception('Password reset failed: ${e.toString()}');
+      throw ErrorHandler.handleAuthException(e, StackTrace.current);
     }
   }
 
@@ -494,7 +492,10 @@ class AuthService {
     try {
       final user = currentUser;
       if (user == null || user.email == null) {
-        throw Exception('No user logged in');
+        throw AuthenticationException(
+          message: 'No user logged in',
+          details: 'Please log in again to change your password',
+        );
       }
 
       // Re-authenticate user with current password
@@ -507,25 +508,28 @@ class AuthService {
 
       // Update password
       await user.updatePassword(newPassword);
-
-      print('Password changed successfully');
     } catch (e) {
-      print('Change Password Error: $e');
+      if (e is AppException) {
+        throw e;
+      }
       if (e is FirebaseAuthException) {
         switch (e.code) {
           case 'wrong-password':
-            throw Exception('Current password is incorrect');
+            throw InvalidCredentialsException(
+              message: 'Current password is incorrect',
+            );
           case 'weak-password':
-            throw Exception('New password is too weak');
+            throw WeakPasswordException();
           case 'requires-recent-login':
-            throw Exception(
-              'Please log out and log back in before changing your password',
+            throw AuthenticationException(
+              message: 'Please log out and log back in',
+              details: 'For security, you must log in again to change your password',
             );
           default:
-            throw Exception('Failed to change password: ${e.message}');
+            throw ErrorHandler.handleAuthException(e, StackTrace.current);
         }
       }
-      throw Exception('Failed to change password: ${e.toString()}');
+      throw ErrorHandler.handleAuthException(e, StackTrace.current);
     }
   }
 }

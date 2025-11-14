@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../utils/error_handler.dart';
+import '../../../core/exceptions/app_exceptions.dart';
 import '../models/app_user.dart';
 import '../services/auth_service.dart';
 import '../../../services/fcm_service.dart';
@@ -175,7 +177,13 @@ class AuthProvider with ChangeNotifier {
       await _authService.signInWithGoogle();
       return true;
     } catch (e) {
-      _setError(e.toString());
+      final appException = ErrorHandler.handleException(
+        e,
+        StackTrace.current,
+        defaultMessage: 'Sign-in failed',
+      );
+      _setError(appException.getUserMessage());
+      ErrorHandler.logException(appException);
       return false;
     } finally {
       _setLoading(false);
@@ -191,7 +199,13 @@ class AuthProvider with ChangeNotifier {
       await _authService.signInWithEmailPassword(email, password);
       return true;
     } catch (e) {
-      _setError(e.toString());
+      final appException = ErrorHandler.handleException(
+        e,
+        StackTrace.current,
+        defaultMessage: 'Sign-in failed',
+      );
+      _setError(appException.getUserMessage());
+      ErrorHandler.logException(appException);
       return false;
     } finally {
       _setLoading(false);
@@ -211,7 +225,13 @@ class AuthProvider with ChangeNotifier {
       await _authService.signUpWithEmailPassword(email, password, name);
       return true;
     } catch (e) {
-      _setError(e.toString());
+      final appException = ErrorHandler.handleException(
+        e,
+        StackTrace.current,
+        defaultMessage: 'Sign-up failed',
+      );
+      _setError(appException.getUserMessage());
+      ErrorHandler.logException(appException);
       return false;
     } finally {
       _setLoading(false);
@@ -263,7 +283,13 @@ class AuthProvider with ChangeNotifier {
       await _authService.resetPassword(email);
       return true;
     } catch (e) {
-      _setError(e.toString());
+      final appException = ErrorHandler.handleException(
+        e,
+        StackTrace.current,
+        defaultMessage: 'Failed to reset password',
+      );
+      _setError(appException.getUserMessage());
+      ErrorHandler.logException(appException);
       return false;
     } finally {
       _setLoading(false);
@@ -355,7 +381,13 @@ class AuthProvider with ChangeNotifier {
       await _authService.changePassword(currentPassword, newPassword);
       return true;
     } catch (e) {
-      _setError(e.toString());
+      final appException = ErrorHandler.handleException(
+        e,
+        StackTrace.current,
+        defaultMessage: 'Failed to change password',
+      );
+      _setError(appException.getUserMessage());
+      ErrorHandler.logException(appException);
       return false;
     } finally {
       _setLoading(false);
