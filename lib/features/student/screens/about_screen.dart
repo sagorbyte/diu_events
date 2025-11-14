@@ -2,9 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'widgets/student_hamburger_menu.dart';
+import '../../../utils/utils.dart';
 
-class AboutScreen extends StatelessWidget {
+class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
+
+  @override
+  State<AboutScreen> createState() => _AboutScreenState();
+}
+
+class _AboutScreenState extends State<AboutScreen> {
+  int _developerSectionTapCount = 0;
+  static const int _tapsRequired = 10;
 
   @override
   Widget build(BuildContext context) {
@@ -16,76 +25,6 @@ class AboutScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 30),
-
-            // App Logo/Icon
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF3F3D9C), Color(0xFF5B59C7)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(30),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF3F3D9C).withOpacity(0.4),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Icon(
-                  Icons.event_available,
-                  size: 60,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // App Name
-            Text(
-              'DIU Events',
-              style: GoogleFonts.hindSiliguri(
-                fontSize: 32,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF3F3D9C),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // App Version
-            Text(
-              'Version 1.0.0',
-              style: GoogleFonts.hindSiliguri(
-                fontSize: 16,
-                color: Colors.grey.shade600,
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // App Tagline
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-              child: Text(
-                'Your Gateway to Campus Events',
-                style: GoogleFonts.hindSiliguri(
-                  fontSize: 16,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.grey.shade700,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-
-            const SizedBox(height: 40),
-
             // About the App Section
             _buildSection(
               icon: Icons.info_outline,
@@ -329,73 +268,109 @@ class AboutScreen extends StatelessWidget {
   }
 
   Widget _buildDeveloperSection(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF3F3D9C), Color(0xFF5B59C7)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return GestureDetector(
+      onTap: _handleDeveloperSectionTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF3F3D9C), Color(0xFF5B59C7)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF3F3D9C).withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF3F3D9C).withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        child: Column(
+          children: [
+            const Icon(Icons.code, color: Colors.white, size: 48),
+            const SizedBox(height: 16),
+            Text(
+              'Developed by',
+              style: GoogleFonts.hindSiliguri(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.9),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Sagor Majumder',
+              style: GoogleFonts.hindSiliguri(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+            ),
+                      const SizedBox(height: 8),
+            Text(
+              'Student ID: 221-15-4907',
+              style: GoogleFonts.hindSiliguri(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Department of CSE',
+              style: GoogleFonts.hindSiliguri(
+                fontSize: 16,
+                color: Colors.white.withOpacity(0.95),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Daffodil International University',
+              style: GoogleFonts.hindSiliguri(
+                fontSize: 16,
+                color: Colors.white.withOpacity(0.95),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
-      child: Column(
-        children: [
-          const Icon(Icons.code, color: Colors.white, size: 48),
-          const SizedBox(height: 16),
-          Text(
-            'Developed by',
-            style: GoogleFonts.hindSiliguri(
-              fontSize: 14,
-              color: Colors.white.withOpacity(0.9),
-            ),
+    );
+  }
+
+  void _handleDeveloperSectionTap() {
+    setState(() {
+      _developerSectionTapCount++;
+    });
+
+    if (_developerSectionTapCount == _tapsRequired) {
+      _showToast();
+      _developerSectionTapCount = 0;
+    }
+  }
+
+  void _showToast() {
+    final msg = Utils.g('a');
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          msg,
+          style: GoogleFonts.hindSiliguri(
+            fontSize: 14,
+            color: Colors.white,
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Sagor Majumder',
-            style: GoogleFonts.hindSiliguri(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-            textAlign: TextAlign.center,
-          ),
-                    const SizedBox(height: 8),
-          Text(
-            'Student ID: 221-15-4907',
-            style: GoogleFonts.hindSiliguri(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Department of CSE',
-            style: GoogleFonts.hindSiliguri(
-              fontSize: 16,
-              color: Colors.white.withOpacity(0.95),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Daffodil International University',
-            style: GoogleFonts.hindSiliguri(
-              fontSize: 16,
-              color: Colors.white.withOpacity(0.95),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+          textAlign: TextAlign.center,
+        ),
+        backgroundColor: const Color(0xFF3F3D9C),
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       ),
     );
   }
@@ -533,7 +508,7 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 16),
           _buildInfoRow('Project Type', 'Final Year Design Project'),
           const SizedBox(height: 12),
-          _buildInfoRow('Degree', 'BSc in Computer Science & Engineering'),
+          _buildInfoRow('Degree', 'B.Sc. in Computer Science & Engineering'),
           const SizedBox(height: 12),
           _buildInfoRow('Department', 'Department of CSE'),
           const SizedBox(height: 12),
